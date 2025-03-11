@@ -40,8 +40,8 @@ public class EndToEndTests {
         assertEquals("https://agular-test-shop-cb70d.firebaseapp.com/", currentUrl);
 
         //1. Select the Bread Category
-        // WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(10));
-        // wait.until(ExpectedConditions.presenceOfElementLocated(By.linkText("Bread")));
+        WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(10));
+        wait.until(ExpectedConditions.presenceOfElementLocated(By.linkText("Bread")));
         driver.findElement(By.linkText("Bread"));
         
         //Drop the driver
