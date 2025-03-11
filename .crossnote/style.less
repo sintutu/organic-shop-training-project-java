@@ -1,0 +1,25 @@
+
+/* Please visit the URL below for more information: */
+/*   https://shd101wyy.github.io/markdown-preview-enhanced/#/customize-css */
+
+.markdown-preview.markdown-preview {
+  // modify your style here
+  // eg: background-color: blue;
+  .fancy-box {
+    background-color: #d4f7d4; // Light green background
+    border: 2px solid #228b22; // Dark green border
+    border-radius: 15px; // Rounded corners
+    padding: 10px; // Space inside the box
+    font-family: Arial, sans-serif; // Clean font
+    color: #006400; // Text color
+    position: relative; // Enables pseudo-element positioning
+  }
+
+  .fancy-box:before {
+    content: "😊"; // Adds the smiley
+    position: absolute;
+    top: -10px;
+    left: -10px;
+    font-size: 20px;
+  }
+}
