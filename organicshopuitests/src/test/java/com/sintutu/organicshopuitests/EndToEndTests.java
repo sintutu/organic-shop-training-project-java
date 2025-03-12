@@ -160,8 +160,8 @@ public class EndToEndTests {
         // 11. Click Login
         WebElement loginLink = wait.until(ExpectedConditions.presenceOfElementLocated(By.linkText("Login")));
         loginLink.click();
-        
+
         //Drop the driver
-        // driver.quit();
+        driver.quit();
     }
 }
