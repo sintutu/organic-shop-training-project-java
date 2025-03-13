@@ -2,6 +2,9 @@ package com.sintutu.organicshopuitests;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.nio.file.Paths;
 import java.time.Duration;
 
 import org.junit.jupiter.api.Test;
@@ -31,7 +34,12 @@ Add an end to end test performing the following:
  */
 public class EndToEndTests {
     @Test
-    public void endToEndTestShouldSucceed() {
+    public void endToEndTestShouldSucceed() throws URISyntaxException {
+        // Set the path to chromedriver
+        URL resource = getClass().getClassLoader().getResource("drivers/chromedriver.exe");
+        if (resource != null) {
+            System.setProperty("webdriver.chrome.driver", Paths.get(resource.toURI()).toString());
+        }
         //Create the WebDriver 
         WebDriver driver = new ChromeDriver();
 
