@@ -80,7 +80,7 @@ public class EndToEndTests {
         WebElement addToCartFreshFrenchBaguette 
         = wait.until(ExpectedConditions.presenceOfElementLocated(
             By.xpath(
-                "//product-card[.//h5[contains(text(), 'Fresh French Baguette')]]//button[contains(text(), 'Add to Cart')]\r\n"
+                "//product-card[.//h5[contains(text(), 'Fresh French Baguette')]]//button[contains(text(), 'Add to Cart')]"
                 )));
         addToCartFreshFrenchBaguette.click();
 
@@ -96,13 +96,14 @@ public class EndToEndTests {
         WebElement addToCartCheese 
         = wait.until(ExpectedConditions.presenceOfElementLocated(
             By.xpath(
-                "//product-card[.//h5[contains(text(), 'Cheese')]]//button[contains(text(), 'Add to Cart')]\r\n"
+                "//product-card[.//h5[contains(text(), 'Cheese')]]//button[contains(text(), 'Add to Cart')]"
                 )));
         addToCartCheese.click();
+
         WebElement addOneMoreToCartCheese
         = wait.until(ExpectedConditions.presenceOfElementLocated(
             By.xpath(
-                "//product-card[.//h5[contains(text(), 'Cheese')]]//button[contains(text(), '+')]\r\n"
+                "//product-card[.//h5[contains(text(), 'Cheese')]]//button[contains(text(), '+')]"
                 )));
         addOneMoreToCartCheese.click();
 
@@ -157,8 +158,7 @@ public class EndToEndTests {
         WebElement removeOneMoreFromCartCheese
         = wait.until(ExpectedConditions.presenceOfElementLocated(
             By.xpath(
-                "//table[.//td[contains(text(), 'Cheese')]]//button[contains(text(), '-')]\r\n"
-                )));
+"//table//tr[td[normalize-space(text()) = 'Cheese']]//button[normalize-space(text()) = '-']"                )));
         removeOneMoreFromCartCheese.click();
 
         // 10. Click checkout
