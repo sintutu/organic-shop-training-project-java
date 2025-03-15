@@ -20,39 +20,7 @@ How come?
 
 Playwright has access to the Accessibility Tree. Selenium does't. Selenium doesn't recognise implicit roles of anchor tags. :disappointed: 
 
-Implicit roles allow `a` to be associated with aria-role by the browser, thus don't need a developer to specify it. It's actually bad practice as per [ARIA in HTML, W3C Recommendation 13 February 2025](https://www.w3.org/TR/html-aria/?form=MG0AV3#avoid-specifying-redundant-roles).
-
-<div class="recommendation-box">
-  By the way,
-  <a href="https://www.w3.org/TR/html-aria/?form=MG0AV3#avoid-specifying-redundant-roles">
-  ARIA in HTML, W3C Recommendation 13 February 2025
-  </a> is awesome guidance to start looking at what comes straight out the browser.
-</div>
-<br/>
-
-Here's what I learned from copilot:
-
-> Me: Selenium has no automatic aria-role selector in java. Does this mean the browser converts the link (with the implicit aria-role being link) and then the driver can find that link?
->
-> Copilot: You’re absolutely on the right track! The browser interprets the HTML elements, applies their implicit roles (like `link` for an `<a>` tag with an `href` attribute), and exposes this information via the **Accessibility Tree**. This Accessibility Tree bridges the gap between the web page and assistive technologies, ensuring proper interpretation of the roles, labels, and other attributes.
->
->However, Selenium doesn’t directly interact with the Accessibility Tree or ARIA roles when locating elements. Instead, it communicates with the browser's DOM (Document Object Model). So, if you’re using something like `By.linkText("Bread")` or `By.xpath("//a[@href='/?category=bread']")`, Selenium is finding the `<a>` element in the DOM based on the specified criteria, rather than by its implicit `link` role.
->
->In summary:
->- The browser does recognize implicit ARIA roles (like `link`) and exposes them to the Accessibility Tree.
->- Selenium interacts with the DOM, not the Accessibility Tree, so its locators (like `findElement`) rely on attributes and structure rather than ARIA roles.
->
->If you’re looking for accessibility testing or working directly with ARIA roles, tools like Axe, Lighthouse, or specialized libraries might come in handy.
->
->Let me know if you'd like further clarification or assistance with Selenium!
-
-So that sucks. I'm not going to be able to easily copy and paste from my Playwright project.
-
-### Why I wanted to use aria-role so much?
-
-I didn't want to change my locator strategy from Playwright so much. I wanted parity. That's the main objective, to get this done fast. And I was lazy. I had the misconception that using Playwright automtically meant I had accessibility testing automated into my tests. In truth, I hadn't. 
-
-If I did want to have accessibility testing, I should probably look the whole page experience rather than just that the single link have an aria-role tag. 
+[Read more in Aria Learnings...](aria-learnings.md)
 
 If I really want accessibility testing on the page, I can use [AXE](https://github.com/dequelabs/axe-core). How? I load a page then run the AXE script on it. It scans the page for accessibility issues. Note that it's a node package so I'd need my environment to have node on it. Then I can test a page for accessibility issues somewhat more thoroughly. 
 
@@ -60,7 +28,9 @@ Would I want to put accessibility tests into this particular task? No. I'd proba
 
 What's kinda great is how I learnt a Selenium weakness.
 
-## Implementing Waiting with Selenium
+---
+
+## Finding the `breadLink`
 
 Sadly, it takes time for the Bread link to display.
 
@@ -84,11 +54,9 @@ On the browser side, it takes a bit of time for the Bread link to even appear.
 Instead, this code passes:
 
 ```java
-        WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(10));
-        WebElement breadLink = wait.until(ExpectedConditions.presenceOfElementLocated(By.linkText("Bread")));
-```
-
-## Finding the `breadLink` 
+WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(10));
+WebElement breadLink = wait.until(ExpectedConditions.presenceOfElementLocated(By.linkText("Bread")));
+``` 
 
 What does this new code do? I tried figuring out. How can a `WebElement` be set by the `until` method? I looked at the method implementations for `until` and `presenceOfElementLocated` and needed Copilot help for the answer. Here's how it went.
 
@@ -267,13 +235,15 @@ breadlink.click();
 
 Once clicked, it's easy to update `currentUrl` and assert that it is the correct one, "https://agular-test-shop-cb70d.firebaseapp.com/?category=bread", with junit's assertEquals method.
 
+---
+
 ## Adding the French Baguette to the cart
 
-This one was hard. While Playwright allowed for filtering, the best option found in Selenium is to use xpath.
+This one was hard. While Playwright allowed for filtering, the best option found in Selenium is to use XPath.
 
 The task is to look at all the bread products, of which there is Pita and Fresh French Baguette, and click the Add to cart button on the Fresh French Baguette.
 
-Since xpath looks at the DOM, here's the node where the Fresh French Baguette is found:
+Since XPath looks at the DOM, here's the node where the Fresh French Baguette is found:
 
 ```html
 <product-card _ngcontent-c2="" _nghost-c4=""><!---->
@@ -290,23 +260,19 @@ Since xpath looks at the DOM, here's the node where the Fresh French Baguette is
 </product-card>
 ```
 
-The approach to find the xpath is to traverse the dom using javascript. The destination means these two are equivalent expressions:
+The approach to find the xpath is to traverse the dom using javascript.
 
-||XPath|Browser Console|
-|:--|:----|:--------------|
-|Final Answer|//product-card[.//h5[contains(text(), 'Fresh French Baguette')]]//button[contains(text(), 'Add to Cart')]|console.log(Array.from(document.querySelectorAll('product-card')).filter(card => card.querySelector('h5') && card.querySelector('h5').innerText.includes('Fresh French Baguette')).map(card => Array.from(card.querySelectorAll('button')).find(button => button.innerText.includes('Add to Cart'))).filter(button => button !== undefined)|
-|W3C schools reference material|[XPath Syntax](https://www.w3schools.com/xml/xpath_syntax.asp) section on Selecting Nodes|[HTML DOM Document querySelectorAll() Method](https://www.w3schools.com/jsref/met_document_queryselectorall.asp)|
-|MDN reference material|[XPath functions](https://developer.mozilla.org/en-US/docs/Web/XML/XPath/Reference/Functions)|Nothing useful so far|
+**Step 1**
+Look for all `product-card` elements that *appear anywhere* on the document.
 
-Look for all `product-card` elements at *appear anywhere* on the document.
+In Javascript, use:
 
-In the browser console you can run
 ```javascript
 const productCards = document.querySelectorAll('product-card');
 console.log(productCards);
 ```
 
-In XPath you run
+In XPath, use
 ```xpath
 //product-card
 ```
@@ -315,21 +281,23 @@ When searching the whole page, you find two It shows the `product-card`s for the
 
 ![All 'product-card' elements on the bread page](./images/bread-product-cards.png).
 
-What separates these `product-card` elements is the text inside one of the descendants. The text, "Fresh French Baguette" exists as a child of the `h5`. So you filter for this to find the product-card elements that contain this value.
+What separates these `product-card` elements is the text inside one of the descendants. The text, "Fresh French Baguette" exists as a child of the `h5`. 
 
-You do this in javascript with
+**Step 2**
+Filter the `product-card` elements that have a descendent `h5` element with innerText "Fresh French Baguette".
+
+In Javascript, use
 
 ```javascript
 const filteredProductCards = Array.from(productCards)
-                        .filter(card => 
-                                card.querySelector('h5') && 
-                                card.querySelector('h5')
-                                        .innerText.includes('Fresh French Baguette')
-                                );
+  .filter(card => 
+          card.querySelector('h5') && 
+          card.querySelector('h5')
+              .innerText.includes('Fresh French Baguette'));
 console.log(filteredProductCards);
 ```
 
-and in XPath with 
+and in XPath, use
 
 ```xpath
 //product-card[.//h5[contains(text(), 'Fresh French Baguette')]]
@@ -337,21 +305,22 @@ and in XPath with
 
 This is a great spot to highlight XPath's use of the `.` operator in `.//h5`. With the `.` you're telling XPath to look at only the `product-card` elements, not every `h5` tag on the page. Without the `.`, i.e. with `//h5` you'd get every `h5` element on the page.
 
-Now that the correct `product-card` is found, you look for the button. How this is done is 
+**Step 3**
+Now that the correct `product-card` is found, you look for the `button` element with inner text "Add to Cart".
 
-with javascript
+With Javascript, use
 
 ```javascript
-const addToCartButtons = filteredProductCards.map(card => 
-                                                  Array.from(card.querySelectorAll('button'))
-                                                  .find(button => 
-                                                        button.innerText.includes('Add to Cart')
-                                                        ))
-                                             .filter(button => button !== undefined);
+const addToCartButtons = filteredProductCards
+  .map(card => 
+       Array.from(card.querySelectorAll('button'))
+       .find(button => 
+             button.innerText.includes('Add to Cart')))
+  .filter(button => button !== undefined);
 console.log(addToCartButtons);
 ```
 
-and with XPath
+and with XPath, use
 
 ```xpath
 //product-card[.//h5[contains(text(), 'Fresh French Baguette')]]//button[contains(text(), 'Add to Cart')]
@@ -361,11 +330,13 @@ Note how in javascript there's the possibility to also remove any buttons that a
 
 And that's how you locate the Add to Cart button on the right product.
 
-It's also how you locate the + and - buttons.
+It's also how you locate the + button.
+
+---
 
 ## Removing a block of cheese
 
-Take a similar approach. This time it's traversing a table. 
+Take a similar approach. This time it's traversing a table which is defined by
 
 ```html
 <table _ngcontent-c6="" class="table">
@@ -409,7 +380,10 @@ Take a similar approach. This time it's traversing a table.
 </table>
 ```
 
-First find the table. To do this is a matter of searching the whole document for every table element. *Since this page only has the one table this is fine.*
+**Step 1**
+First find the `table` elements. 
+
+To do this is a matter of searching the whole document for every table element. *Since this page only has the one table this is fine. The Cheese is in this one table.*
 
 Do this in Javascript with
 
@@ -424,60 +398,10 @@ Do this in XPath with
 //table
 ```
 
-The next bit is to find that `<tr>` that contains `<td>" Cheese "</td>`.
+**Step 2**
+Find that `tr` element that contains `td` element with innerText " Cheese ".
 
-There are two approaches. Since the assumption is that there are multiple possible tables, create a 3D array where the outermost array is of `<table>` and the middle array is of `<tr>` elements from each table and the inner array is of `<td>` elements. Make the outermost loop go over the `<table>` elements. Make the middle loop go through the `<tr>` elements. In this innermost loop create an array of `<td>` elements inside the `<tr>` element, and search this array for some `<td>` element which contains the trimmed innerText "Cheese".
-
-This Javascript this is how it works
-
-```javascript
-const tables = document.querySelectorAll('table');
-console.log(tables); // Logs all tables on the page
-
-// Create a nested array of rows for each table
-const tableRows = Array.from(tables).map(table => {
-    const rows = Array.from(table.querySelectorAll('tr'));
-    console.log(rows); // Log all rows in this table
-    return rows;
-});
-
-console.log(tableRows); // Logs the nested array of rows for each table
-
-// Find the row containing "Cheese" in the nested structure
-let cheeseRow;
-for (const rows of tableRows) { // Iterate through each table's rows
-    cheeseRow = rows.find(row => {
-        console.log(row.innerText); // Log each row's text content
-        return Array.from(row.querySelectorAll('td'))
-            .some(td => td.innerText.trim() === 'Cheese'); // Match row with exact "Cheese" text
-    });
-    if (cheeseRow) break; // Stop searching once the row is found
-}
-
-console.log(cheeseRow); // Logs the row containing "Cheese" (or undefined if not found)
-
-// Find the decrement button within the matched row
-if (cheeseRow) {
-    const decrementButton = Array.from(cheeseRow.querySelectorAll('button')).find(button =>
-        button.innerText === '-' // Ensures we only get the "decrement" button
-    );
-    console.log(decrementButton); // Logs the `-` button
-
-    // Click the button if found
-    if (decrementButton) {
-        decrementButton.click();
-        console.log("Clicked the decrement button for 'Cheese'.");
-    } else {
-        console.log("Decrement button not found in the Cheese row.");
-    }
-} else {
-    console.log("Cheese row not found.");
-}
-```
-
-Something special about printing a table row with `console.log(tableRows)` is that it prints all the text in the row. That's because it prints the innerText of the `<tr>` element, which is the text of all the children in the order the text appears.
-
-Below is the table row containing cheese. Notice how the text of the children
+Below is the table row containing cheese
 ```html
 <tr _ngcontent-c2="">
   <td _ngcontent-c2="">
@@ -500,14 +424,85 @@ Below is the table row containing cheese. Notice how the text of the children
   <td _ngcontent-c2="" class="text-right"> $60.00 </td>
 </tr>
 ```
-which means you get printed to the console
+
+The image below shows what we are looking for. When the page is found there were 5 units of cheese till the - button was found, clicked, and now4 units remain.
+![Minus button for cheese](./images/minus-button-for-cheese.png)
+
+There are two Javascript approaches to find this `tr` element.
+
+***The nested array approach***
+ Since the assumption is that there are multiple possible tables, create a 3D array where
+
+ 1. the outermost array is of all `table` elements on the document
+ 2. and the middle array is of `tr` elements from each table on the document 
+ 3. and the inner array is of `td` elements in the `tr` elements. 
+ 4. Make the outermost loop go over the array of `table` elements.
+ 5. Make the middle loop go through the array of `tr` elements. 
+ 6. In this innermost loop create an array of `td` elements inside the `tr` element in context, and search this array of `td` elements for a `td` element with innerText " Cheese ".
+
+This approach in Javascript is done by
+
+```javascript
+const tables = document.querySelectorAll('table');
+console.log(tables); // Logs all tables on the page
+
+// Create a nested array of rows for each table
+const tableRows = Array.from(tables)
+  .map(table => {
+       const rows = Array.from(table.querySelectorAll('tr'));
+       console.log(rows); // Log all rows in this table
+       return rows;});
+
+console.log(tableRows); // Logs the nested array of rows for each table
+
+// Find the row containing "Cheese" in the nested structure
+let cheeseRow;
+for (const rows of tableRows) { // Iterate through each table's rows
+  cheeseRow = rows
+    .find(row => {
+          console.log(row.innerText); // Log each row's text content
+          return Array.from(row.querySelectorAll('td'))
+            .some(td => td.innerText.trim() === 'Cheese'); // Match row with exact "Cheese" text
+    });
+    if (cheeseRow) break; // Stop searching once the row is found
+}
+console.log(cheeseRow); // Logs the row containing "Cheese" (or undefined if not found)
+
+// Find the decrement button within the matched row
+if (cheeseRow) {
+    const decrementButton = Array.from(cheeseRow.querySelectorAll('button')).find(button =>
+        button.innerText === '-' // Ensures we only get the "decrement" button
+    );
+    console.log(decrementButton); // Logs the `-` button
+}
+```
+
+Something special about printing a table row with `console.log(tableRows)` is that it prints all the text in the row. That's because it prints the innerText of the `<tr>` element, which is the text of all the children in the order the text appears.
+
+
+The console gets printouts look like
 ![Console printout of cheese table row](./images/console-printout-of-cheese-table-row.png)
 
-and digging into the table row shows you how it really does have that content as innerText:
-
+and digging into the table row shows you how this `<tr>` element really does have that content as innerText
 ![innerText of row with Cheese](./images/table-row-inner-text.png)
 
-There's a different, somewhat faster way with `flatmap`. It's 2D. This approach still looks at all tables on the document (of which there is only one) and makes it the outer array. The inner array is only of `<tr>` elements that have `<td>` elements whose trimmed innerText is "Cheese". And because it's a flatmap it just returns a single array of all elements that satisfy this condition. It so happens there's only one element that satisfies the condition. With this 1D array, it's easier to iterate over.
+In XPath, use
+
+```xpath
+//table//tr[td[normalize-space(text()) = 'Cheese']]
+```
+
+***The flatmap approach***
+This approach produces a 1D array from higher dimensional arrays. 
+1. Make an empty 1D array of `flatRow`
+2. Make an outer array of `table` elements on the document (of which there is only one `table` element) 
+3. Make an inner array populated carefully by
+    1.  Making an array of `tr` elements that have `td` elements whose trimmed innerText is "Cheese". 
+    2. Add (or `map`) these elements to the `flatRow` array.
+    3. There shouldn't be multiple rows which satisfy these criteria, but if they are there, they still get added.
+4. Return the first element of`flatRow` array as the desired `tr` element.
+
+In Javascript this approach is done by
 
 ```javascript
 const tables = document.querySelectorAll('table');
@@ -515,10 +510,10 @@ console.log(tables); // Logs all tables on the page
 
 const flatRow = Array.from(tables)
   .flatMap(table =>
-    Array.from(table.querySelectorAll('tr'))
-      .find(row =>
-            Array.from(row.querySelectorAll('td'))
-      .some(td => td.innerText.trim() === 'Cheese'))
+           Array.from(table.querySelectorAll('tr'))
+           .find(row =>
+                 Array.from(row.querySelectorAll('td'))
+           .some(td => td.innerText.trim() === 'Cheese'))
   ); 
 console.log(flatRow); // Returns array of all `<td>` elements where some element has innerText.trim() === 'Cheese'
 const cheeseRow = flatRow[0]; // get the first matching row
@@ -526,7 +521,8 @@ console.log(cheeseRow); // Logs the row containing "Cheese"
 
 // Find the decrement button within the matched row
 const decrementButton = cheeseRow
-  ? Array.from(cheeseRow.querySelectorAll('button')).find(button => button.innerText === '-')
+  ? Array.from(cheeseRow.querySelectorAll('button'))
+    .find(button => button.innerText === '-')
   : undefined;
 
 console.log(decrementButton); // Logs the `-` button
@@ -540,165 +536,84 @@ if (decrementButton) {
 }
 ```
 
+The XPath for this is
 
->Copilot:
->
->### What Does `flatMap` Do and Why Is It Used?
->
->#### Purpose of `flatMap`:
->`flatMap` is a combination of:
->- **`map()`**, which transforms (or maps) each element of an array, and
->- **`flat()`**, which flattens (or merges) nested arrays into a single array.
->
->For example:
->```javascript
->const array = [[1, 2], [3, 4]];
->const flattened = array.flatMap(x => x.map(y => y * 2)); // [2, 4, 6, 8]
->```
-> ### The `find` Method
->
->#### Purpose:
->The `find` method is used to search an array for the **first element** that matches a specified condition (also known as a predicate). It stops searching as soon as it finds the first match and returns that element. If no match is found, it returns `undefined`.
->
->#### **Syntax**:
->```javascript
->array.find(callback(element, index, array), thisArg)
->```
->
->- **`callback`**: A function executed on each element in the array. It should return `true` for the matching element.
->- **Parameters of `callback`**:
->  - `element`: The current element being processed.
->  - `index` (optional): The index of the current element.
->  - `array` (optional): The entire array being processed.
->- **`thisArg` (optional)**: A value to use as `this` when executing the `callback`.
->
->#### **Example**:
->```javascript
->const numbers = [10, 20, 30, 40];
->const foundNumber = numbers.find(num => num > 25);
->console.log(foundNumber); // Output: 30
->```
->
->- In this case, the `find` method stops as soon as it finds the first number (`30`) greater than `25`.
->
->
->### The `some` Method
->
->#### Purpose:
->The `some` method is used to check whether **at least one element** in the array satisfies a specified condition (predicate). It stops searching as soon as it finds a matching element and returns `true`. If no elements match, it returns `false`.
->
->#### Syntax:
->```javascript
->array.some(callback(element, index, array), thisArg)
->```
->
->- **`callback`**: A function executed on each element in the array. It should return `true` for the condition to be satisfied.
->- **Parameters of `callback`**:
->  - `element`: The current element being processed.
->  - `index` (optional): The index of the current element.
->  - `array` (optional): The entire array being processed.
->- **`thisArg` (optional)**: A value to use as `this` when executing the `callback`.
->
->#### **Example**:
->```javascript
->const numbers = [10, 20, 30, 40];
->const hasLargeNumbers = numbers.some(num => num > 35);
->console.log(hasLargeNumbers); // Output: true
->```
->
->- Here, the `some` method checks if at least one number is greater than `35`. Since `40` matches, it returns `true`.
->
->### **Comparison Between `find` and `some`**
->
->| **Feature**        | **`find`**                              | **`some`**                           |
->|---------------------|-----------------------------------------|---------------------------------------|
->| **Purpose**         | Finds the first matching element.       | Checks if **any** element matches.    |
->| **Return Value**    | The matching element, or `undefined`.   | A boolean (`true` or `false`).        |
->| **Search Stops?**   | Yes, after the first match.             | Yes, after the first match.           |
->| **Use Case**        | Retrieve the actual matching element.   | Check if a condition is ever `true`.  |
->
->---
->
->### **How They Work in Your Code**
->
->#### **`find` Example (Locate "Cheese" Row):**
->```javascript
->const cheeseRow = Array.from(tables).flatMap(table =>
->  Array.from(table.querySelectorAll('tr')).find(row =>
->    Array.from(row.querySelectorAll('td')).some(td => td.>innerText.trim() === 'Cheese')
->  )
->)[0];
->```
->
->- **`find` in Action:**
->  - It scans each table’s rows (`<tr>`) for the **first row** where the condition is satisfied.
->  - The condition checks if **any `<td>` within the row** has text content trimmed to "Cheese."
->
->- **`some` in Action:**
->  - Inside the `find` callback, `some` checks whether **at least one `<td>` in the row** matches the condition.
->
->#### Simplified Breakdown:
->1. **`some`:**
->   ```javascript
->   Array.from(row.querySelectorAll('td')).some(td => td.innerText.trim() === 'Cheese');
->   ```
->   - Checks if any `<td>` cell in a row has `"Cheese"` as its exact text (after trimming).
->
->2. **`find`:**
->   ```javascript
->   rows.find(row => /* condition using some */);
->   ```
->   - Locates the **first row** where the `some` condition is `true`.
+```xpath
+//table//tr[td[normalize-space(text()) = 'Cheese']][0]
+```
 
-Then find the table row that contains the table data that contains the inner text Cheese. What happens if I have other items in the cart like "Blue Cheese Quiche" or "Cheesecake"? This is why there's a trim. " Cheese ", when trimmed, will resolve to "Cheese" while the others won't. The approach is to find in a flatmap just that element.
+
+**Step 3**
+Find the `button` element with innerText "-".
+
+This approach
 
 In Javascript that's 
 
 ```javascript
 const tables = document.querySelectorAll('table');
-console.log(tables); // This will log all tables on the page
-const cheeseRow = Array.from(tables)
-  .flatMap(table => {
-           const rows = Array.from(table.querySelectorAll('tr'));
-           console.log(rows); // Log all rows in the current table
-           const matchedRow = rows.find(row => {
-                              console.log(row.innerText); // Log each row's text content
-                              return Array.from(row.querySelectorAll('td'))
-                              .some(td => td.innerText.trim() === 'Cheese');
-                              });
-           console.log(matchedRow); // Log the matched row, or `undefined` if not found
-           return matchedRow;
-           })[0]; // Get the first matching row, if any has Cheese with or without whitespace
-console.log(cheeseRow); // Logs the row containing inner text " Cheese "
-const decrementButton = Array.from(cheeseRow.querySelectorAll('button'))
-                        .find(button =>
-                              button.innerText === '-' // Ensures we only get the "decrement" button
-                             );
-console.log(decrementButton); // Logs the `-` button
+console.log(tables); // Logs all tables on the page
+
+// Create a nested array of rows for each table
+const tableRows = Array.from(tables)
+  .map(table => {
+       const rows = Array.from(table.querySelectorAll('tr'));
+       console.log(rows); // Log all rows in this table
+       return rows;});
+
+console.log(tableRows); // Logs the nested array of rows for each table
+
+// Find the row containing "Cheese" in the nested structure
+let cheeseRow;
+for (const rows of tableRows) { // Iterate through each table's rows
+  cheeseRow = rows
+    .find(row => {
+          console.log(row.innerText); // Log each row's text content
+          return Array.from(row.querySelectorAll('td'))
+            .some(td => td.innerText.trim() === 'Cheese'); // Match row with exact "Cheese" text
+    });
+    if (cheeseRow) break; // Stop searching once the row is found
+}
+console.log(cheeseRow); // Logs the row containing "Cheese" (or undefined if not found)
+
+// Find the decrement button within the matched row
+if (cheeseRow) {
+  const decrementButton = Array.from(cheeseRow.querySelectorAll('button'))
+  .find(button =>
+        button.innerText === '-' // Ensures we only get the "decrement" button
+  );
+  console.log(decrementButton); // Logs the `-` button
+}
 ```
 
-What's interesting about this approach is how it uses `flatmap`. A table is an array of rows, each row being an array of table data. What `flatmap` does is put all the content into a single array.  Another concern is how flat
-
-
-and in XPath that's 
-
-```xpath
-//table//tr[td[normalize-space(text()) = 'Cheese']]//button[text() = '-']
-```
-
-Lastly, find the - button.
-
-In Javascript it's
+or 
 
 ```javascript
-const decrementButton = Array.from(cheeseRow.querySelectorAll('button')).find(button =>
-    button.innerText === '-' // Ensures we only get the "decrement" button
-);
+const tables = document.querySelectorAll('table');
+console.log(tables); // Logs all tables on the page
+
+const flatRow = Array.from(tables)
+  .flatMap(table =>
+           Array.from(table.querySelectorAll('tr'))
+           .find(row =>
+                 Array.from(row.querySelectorAll('td'))
+           .some(td => td.innerText.trim() === 'Cheese'))
+  ); 
+console.log(flatRow); // Returns array of all `<td>` elements where some element has innerText.trim() === 'Cheese'
+const cheeseRow = flatRow[0]; // get the first matching row
+console.log(cheeseRow); // Logs the row containing "Cheese"
+
+// Find the decrement button within the matched row
+const decrementButton = cheeseRow
+  ? Array.from(cheeseRow.querySelectorAll('button'))
+    .find(button => button.innerText === '-')
+  : undefined;
+
 console.log(decrementButton); // Logs the `-` button
 ```
 
 and in XPath it's
 
 ```xpath
-//table//tr[td[contains(text(), 'Cheese')]]//button[text() = '-']
+//table//tr[td[normalize-space(text()) = 'Cheese']]//button[text() = '-']
 ```
