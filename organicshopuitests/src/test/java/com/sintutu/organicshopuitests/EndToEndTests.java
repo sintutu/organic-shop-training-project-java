@@ -25,43 +25,43 @@ public class EndToEndTests extends TestBase {
     public void endToEndTestShouldSucceed(){
 
         //Navigate to home page
-        pageFactory.getHomePage().load();
-        pageFactory.getHomePage().assertHomePageIsLoaded();
+        homePage.load();
+        homePage.assertHomePageIsLoaded();
 
         //1. Select the Bread Category
-        pageFactory.getHomePage().clickBreadLink();
+        homePage.clickBreadLink();
 
         //2. Assert that the URL has changed
-        pageFactory.getBreadPage().assertBreadCategoryIsLoaded();
+        breadPage.assertBreadCategoryIsLoaded();
 
         //3. Add a French Baguette
-        pageFactory.getBreadPage().addFrenchBaguetteToCart();
+        breadPage.addFrenchBaguetteToCart();
 
         // 4. Select the Dairy Category
-        pageFactory.getHomePage().clickDairyLink();
+        homePage.clickDairyLink();
 
         // 5. Assert that the URL has changed
-        pageFactory.getDairyPage().assertDairyCategoryIsLoaded();
+        dairyPage.assertDairyCategoryIsLoaded();
 
         // 6. Add 2 blocks of cheese
-        pageFactory.getDairyPage().addCheeseToCart();
-        pageFactory.getDairyPage().incrementCheeseInCart();
+        dairyPage.addCheeseToCart();
+        dairyPage.incrementCheeseInCart();
 
         // 7. Open the cart
-        goToShoppingCart();
+        clickShoppingCartLink();
 
         // 8. Assert that the URL has changed
-        pageFactory.getShoppingCartPage().assertShopppingCartPageIsLoaded();
+        shoppingCartPage.assertShopppingCartPageIsLoaded();
 
         // 9. Remove one block of cheese
-        pageFactory.getShoppingCartPage().decrementCheeseFromCart();
+        shoppingCartPage.decrementCheeseFromCart();
 
         // 10. Click checkout
-        pageFactory.getShoppingCartPage().goToCheckOut();
-        pageFactory.getLoginPage().assertLoginPageIsLoadedViaCheckout();
+        shoppingCartPage.goToCheckOut();
+        loginPage.assertLoginPageIsLoadedViaCheckout();
 
         // 11. Click Login
-        goToLoginPage();
-        pageFactory.getLoginPage().assertLoginPageIsLoaded();
+        clickLoginLink();
+        loginPage.assertLoginPageIsLoaded();
     }
 }
