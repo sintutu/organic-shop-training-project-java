@@ -24,13 +24,13 @@ public class ShoppingCartPage {
     }
 
     // Assert page is loaded
-    public void assertShopppingCartPageIsLoaded() {
+    public void checkShopppingCartPageIsLoaded() {
         wait.until(ExpectedConditions.presenceOfElementLocated(CHEESE_MINUS_BUTTON));  
         String url = driver.getCurrentUrl();
         assertEquals(ConfigReader.getBaseUri()+"shopping-cart", url, "Shopping Cart page did not load as expected.");
     }
 
-    public void decrementCheeseFromCart() {
+    public void removeOneCheeseFromCart() {
         WebElement cheeseMinusButton = wait.until(ExpectedConditions.elementToBeClickable(CHEESE_MINUS_BUTTON));
         cheeseMinusButton.click();
     }

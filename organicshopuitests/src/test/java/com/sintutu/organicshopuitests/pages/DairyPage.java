@@ -24,7 +24,7 @@ public class DairyPage {
     }
 
     // Assert page is loaded
-    public void assertDairyCategoryIsLoaded() {
+    public void checkDairyCategoryIsLoaded() {
         wait.until(ExpectedConditions.presenceOfElementLocated(ADD_CHEESE_TO_CART)); 
         String url = driver.getCurrentUrl();
         assertEquals(ConfigReader.getBaseUri()+"?category=dairy", url, "Dairy Category did not load as expected.");
@@ -35,7 +35,7 @@ public class DairyPage {
         addCheeseToCartButton.click();
     }
 
-    public void incrementCheeseInCart(){
+    public void addOneMoreCheeseToCart(){
         WebElement cheesePlusButton = wait.until(ExpectedConditions.elementToBeClickable(INCREMENT_CHEESE_IN_CART));
         cheesePlusButton.click();
     }

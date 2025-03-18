@@ -22,13 +22,13 @@ public class LoginPage {
     }
 
     // Assert page is loaded
-    public void assertLoginPageIsLoaded() {
+    public void checkLoginPageIsLoaded() {
         wait.until(ExpectedConditions.presenceOfElementLocated(LOGIN_WITH_GOOGLE_BUTTON));  
         String url = driver.getCurrentUrl();
         assertEquals(ConfigReader.getBaseUri()+"login", url, "Login Page did not load as expected from Login link.");
     }
 
-    public void assertLoginPageIsLoadedViaCheckout() {
+    public void checkLoginPageIsLoadedViaCheckout() {
         wait.until(ExpectedConditions.presenceOfElementLocated(LOGIN_WITH_GOOGLE_BUTTON));  
         String url = driver.getCurrentUrl();
         assertEquals(ConfigReader.getBaseUri()+"login?returnUrl=check-out", url, "Login Page did not load as expected from Check Out link.");

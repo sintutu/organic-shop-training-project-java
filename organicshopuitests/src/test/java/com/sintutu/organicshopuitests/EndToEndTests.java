@@ -22,17 +22,17 @@ Add an end to end test performing the following:
  */
 public class EndToEndTests extends TestBase {
     @Test
-    public void endToEndTestShouldSucceed(){
+    public void windowShoppingShouldSucceed(){
 
         //Navigate to home page
         homePage.load();
-        homePage.assertHomePageIsLoaded();
+        homePage.checkHomePageIsLoaded();
 
         //1. Select the Bread Category
         homePage.clickBreadLink();
 
         //2. Assert that the URL has changed
-        breadPage.assertBreadCategoryIsLoaded();
+        breadPage.checkBreadCategoryIsLoaded();
 
         //3. Add a French Baguette
         breadPage.addFrenchBaguetteToCart();
@@ -41,27 +41,27 @@ public class EndToEndTests extends TestBase {
         homePage.clickDairyLink();
 
         // 5. Assert that the URL has changed
-        dairyPage.assertDairyCategoryIsLoaded();
+        dairyPage.checkDairyCategoryIsLoaded();
 
         // 6. Add 2 blocks of cheese
         dairyPage.addCheeseToCart();
-        dairyPage.incrementCheeseInCart();
+        dairyPage.addOneMoreCheeseToCart();
 
         // 7. Open the cart
         clickShoppingCartLink();
 
         // 8. Assert that the URL has changed
-        shoppingCartPage.assertShopppingCartPageIsLoaded();
+        shoppingCartPage.checkShopppingCartPageIsLoaded();
 
         // 9. Remove one block of cheese
-        shoppingCartPage.decrementCheeseFromCart();
+        shoppingCartPage.removeOneCheeseFromCart();
 
         // 10. Click checkout
         shoppingCartPage.goToCheckOut();
-        loginPage.assertLoginPageIsLoadedViaCheckout();
+        loginPage.checkLoginPageIsLoadedViaCheckout();
 
         // 11. Click Login
         clickLoginLink();
-        loginPage.assertLoginPageIsLoaded();
+        loginPage.checkLoginPageIsLoaded();
     }
 }

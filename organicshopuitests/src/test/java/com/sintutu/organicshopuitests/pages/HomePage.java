@@ -29,7 +29,7 @@ public class HomePage {
     }
 
     // Assert page is loaded
-    public void assertHomePageIsLoaded() {
+    public void checkHomePageIsLoaded() {
         wait.until(ExpectedConditions.presenceOfElementLocated(BREAD_LINK)); // Ensures DOM contains the element
         wait.until(ExpectedConditions.presenceOfElementLocated(DAIRY_LINK)); // Ensures DOM contains the element
         String url = driver.getCurrentUrl();

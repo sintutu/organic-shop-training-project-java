@@ -23,7 +23,7 @@ public class BreadPage {
     }
 
     // Assert page is loaded
-    public void assertBreadCategoryIsLoaded() {
+    public void checkBreadCategoryIsLoaded() {
         wait.until(ExpectedConditions.presenceOfElementLocated(ADD_FRENCH_BAGUETTE_TO_CART));  
         String url = driver.getCurrentUrl();
         assertEquals(ConfigReader.getBaseUri()+"?category=bread", url, "Bread Category did not load as expected.");
