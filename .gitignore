@@ -25,3 +25,6 @@ replay_pid*
 
 # outputs
 organicshopuitests/target/*
+
+#vscode
+.vscode/

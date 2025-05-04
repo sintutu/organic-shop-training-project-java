@@ -724,3 +724,364 @@ Having the driver declared in the base of the page allows it to be called in thi
 <div class="design-decision">
 Nice to have. Not interested at this time. No idea how much stock there is.
 </div><br/>
+
+---
+
+## PageFactory critique
+
+I used `PageFactory` to instantiate my page objects. It could have been so much more. I asked for a critique and this is what I got back.
+
+```java
+package com.sintutu.organicshopuitests.utils;
+
+import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.support.ui.WebDriverWait;
+
+import com.sintutu.organicshopuitests.pages.BreadPage;
+import com.sintutu.organicshopuitests.pages.DairyPage;
+import com.sintutu.organicshopuitests.pages.HomePage;
+import com.sintutu.organicshopuitests.pages.LoginPage;
+import com.sintutu.organicshopuitests.pages.ShoppingCartPage;
+
+public class PageFactory {
+    private WebDriver driver;
+    private WebDriverWait wait;
+
+    private HomePage homePage;
+    private BreadPage breadPage;
+    private DairyPage dairyPage;
+    private ShoppingCartPage shoppingCartPage;
+    private LoginPage loginPage;
+
+    public PageFactory(WebDriver driver, WebDriverWait wait) {
+        this.driver = driver;
+        this.wait = wait;
+    }
+
+    public HomePage getHomePage() {
+        if (homePage == null) {
+            homePage = new HomePage(driver, wait);
+        }
+        return homePage;
+    }
+
+    public BreadPage getBreadPage() {
+        if (breadPage == null) {
+            breadPage = new BreadPage(driver, wait);
+        }
+        return breadPage;
+    }
+
+    public DairyPage getDairyPage() {
+        if (dairyPage == null) {
+            dairyPage = new DairyPage(driver, wait);
+        }
+        return dairyPage;
+    }
+
+    public ShoppingCartPage getShoppingCartPage() {
+        if (shoppingCartPage == null) {
+            shoppingCartPage = new ShoppingCartPage(driver, wait);
+        }
+        return shoppingCartPage;
+    }
+
+    public LoginPage getLoginPage() {
+        if (loginPage == null) {
+            loginPage = new LoginPage(driver, wait);
+        }
+        return loginPage;
+    }
+}
+```
+
+>After reviewing your `PageFactory` class, here are some observations and critiques, along with suggestions for improvement:
+>
+>### **Strengths**
+>1. **Lazy Initialization**:
+>   - The `PageFactory` uses lazy initialization (e.g., `if (homePage == null)`) to create page objects only when needed, which is memory-efficient.
+<div class="recommendation-box">
+This is a keeper. Initializing it only when it's needed is super cool. It's a pity the way the tests initialize a page object so far it starts out with null page objects. In cleverer designs I may only need to initialize some of the pages in the test base. Or I may need some tests to terminate before reaching a page. Or I may want to take any instance of an existing page and logout, and perhaps trace if the logout happened across all threads. It's very interesting to consider what we want the state of a gambler to be when they tab away from the curent page or close a tab. It closes a session in some very complicated senses. Lazy Intialiazation would be super useful for these ideas and keeping memory low. What I want to avoid is having memory allocated when there isn't a plan to use it any time soon, e.g. the logoutPage.
+</div><br/>
+
+>2. **Encapsulation**:
+>   - The class encapsulates the creation and management of page objects, keeping the responsibility centralized.
+>
+<div class="aside-box">
+This is a bit iffy. I want to do the information hiding part (hiding how the page object is created). I'm unsure what is meant by <em>management</em>. If it means I can use this one page class to configure the waits however I want for all the page objects, that's great. I just need more experience on whether this really makes things easier to change in future.
+</div><br/>
+
+3. **Simple and Readable**:
+>   - The code is clean and easy to follow, with no unnecessary complexity. This is particularly useful for smaller projects.
+<div class="aside-box">
+Liking the idea of lack of complexity. I'm going to make it more complex because I am going to split creating a page and managing it. This is the flip side of managing all in one place. The responsibility I want to put on one class should be single, not multiple.
+</div><br/>
+
+
+>### **Critiques and Areas for Improvement**
+>1. **Tight Coupling with `WebDriver` and `WebDriverWait`**:
+>   - The `PageFactory` depends directly on `WebDriver` and `WebDriverWait`. This tight coupling makes the class harder to test in isolation and less flexible for future changes.
+>   - **Suggestion**: Introduce an abstraction like a `Driver` interface that `WebDriver` implements. This would allow you to use mocks for testing or switch to other implementations without modifying the `PageFactory`.
+<div class="recommendation-box">
+It's gonna happen. I'm a bit tired of hearing this over and over. Use a driver interface. I'm going to really monitor how much code churn happened because of this single suggestion from my singlularly bad idea to hardcode the driver.
+</div><br/>
+
+>2. **Lack of Flexibility for Additional Page Objects**:
+>   - The current design hardcodes methods for specific pages (e.g., `getHomePage`, `getBreadPage`). Adding a new page requires modifying the `PageFactory` class itself.
+>   - **Suggestion**: Use a `Map` to store page objects keyed by their class or name. For example:
+>     ```java
+>     private Map<Class<?>, Object> pageMap = new HashMap<>();
+>
+>     public <T> T getPage(Class<T> pageClass) {
+>         return (T) pageMap.computeIfAbsent(pageClass, cls -> createPage(cls));
+>         }
+>
+>     private <T> T createPage(Class<T> pageClass) {
+>         // Logic to instantiate the page object
+>         // Use reflection or a factory method
+>         return pageClass.getConstructor(WebDriver.class, WebDriverWait.class)
+>                        .newInstance(driver, wait);
+>     }
+>     ```
+>     This makes the `PageFactory` more generic and extensible.
+><div class="aside-box">
+>This idea is complicated. I don't understand Java <code>HashMap</code>s. What makes them so cool? I can see the intent is to make <code>PageFactory</code> responsible only for creating the page classes. And if I create a new page I wouldn't have to modify <code>PageFactory</code> to do it. I don't hate this idea that much. But is it not too early to abstract?</div><br/>
+>
+>3. **Singleton Management**:
+>   - While lazy initialization ensures that each page object is a singleton, this logic is replicated across multiple methods, leading to boilerplate code.
+>   - **Suggestion**: Abstract the singleton logic into a helper method or use a `Map`-based approach as described above.
+><div class="aside-box">
+>I don't quite understand what this means. I know I want to have 
+><br/><code>public HomePage getHomePage() {<br/>
+>        if (homePage == null) {<br/>
+>            homePage = new HomePage(driver, >wait);<br/>
+>        }
+>        return homePage;
+>    }</code>
+><br/>Let me take a stab at the <code>Map</code>-based approach.
+> Since there's already a <code>pageMap</code> then I have somewhere to search for an initialized Page Object that I'd use. If this doesn't contain an instance of <code>HomePage</code> then that corresponds to <code>homePage == null</code>. Then lazy initialization occurs when <code>computeIfAbsent</code> is called. If there is a <code>HomePage</code> in <code>pageMap</code> then the existing instance of <code>HomePage</code> is returned.<br/>
+>I'm assuming this is a singleton. That's no guarantee. I'll have to see it in the code. I will try this. I really do enjoy thinking about management beyond looking at the waiting strategy. The responsibility to manage the instances available as <em>singletons</em> didn't occur to me until this suggestion.  
+></div><br/>
+>
+>4. **No Unit Tests**:
+>   - The `PageFactory` doesn’t appear to have any tests verifying its functionality.
+>   - **Suggestion**: Write unit tests to ensure each method behaves as expected. Mocks could be used for `WebDriver` and `WebDriverWait` to isolate tests for the `PageFactory`.
+><div class="aside-box">
+>The question I have in my head is, do I want to write unit tests for my unit test framework? And I got some great answers. For the current state of <code>PageFactory</code> it's not really worth it. But once I implement the <code>HashMap</code> and use reflection I make it harder to understand what the factory is supposed to do and errors aren't discoverable at compile-time, only at run-time. If the method signature changes the compiler won't help. So it's important that the tests exist.
+></div><br/>
+>
+>5. **Potential Thread-Safety Issues**:
+>   - If the `PageFactory` were used in a multi-threaded test environment (e.g., parallel test execution), the lazy initialization logic could result in race conditions.
+>   - **Suggestion**: Ensure thread safety by synchronizing access to page object creation or using thread-local storage if needed.
+><div class="aside-box">
+>Since these are singletons, two tests can change the state of each page object. Since I've only got one test, I can't be having parallelism issues. But if I were, I could use <code>ThreadLocal</code> in my <code>TestBase</code> to:
+> <br/>* Create a driver e.g. <code>private static ThreadLocal&lt;WebDriver&gt; driver = new ThreadLocal&lt;&gt;();</code><br/>
+> * Provide <code>EndToEndTests</code> a <code>protected WebDriver getDriver()</code> method that uses that thread-local instance of the driver. The implementation is simply <code>protected WebDriver getDriver() { return driver.get(); }</code> and the tests can then use the driver.
+>The <code>setUp()</code> method (which has the <code>@BeforeEach</code> annotation), can now have a <em>local</em> driver with <code>WebDriver localDriver = new ChromeDriver();</code> and then set the <code>driver</code> available to my tests with <code>driver.set(localDriver);</code>. Then I create <em>thread-local</em> with <code>homePage = new HomePage(getDriver(), getWait());</code>. This <code>getDriver()</code> is the same one accessible to the tests. So in setup, each page object is instantiated with a quick and easy local instance.<br/>Of course, this doesn't stop a <code>PageFactory</code> from being used for the same purpose.
+></div><br/>
+>
+><div class="design-decision">
+><h5>Implement Page Object Factory with reflection, threadsafety and unit tests on the factory</h5>
+>Having considered the existing PageFactory can be implemented with <code>Map</code> and reflection, and that the behaviour of the reflection can be tested in itself, it's useful to implement. It's definitely overkill given the existing pages few, and few others may exist after signing in with Google, it's worth the practice to refactor generating page objects.
+></div><br/>
+>
+>### **Opportunities for Advanced Design**
+>- **Dependency Injection**:
+>  - Consider using a dependency injection framework (e.g., Spring, Guice) to manage the lifecycle of `WebDriver`, `WebDriverWait`, and page objects. This approach could reduce boilerplate code and improve flexibility.
+>
+><div class="design-decision">
+>Deferring dependency injection to when I go into Spring. 
+></div><br/>
+>
+>- **Separate Concerns**:
+>  - The `PageFactory` class currently handles both page object management and initialization. Splitting these responsibilities into separate classes (e.g., a `PageManager` and a `PageFactory`) might improve clarity and cohesion.
+>
+><div class="aside-box">
+>Okay. So now I have a clearer understanding. <ul><li>A <em>manager</em> is about coordination. It knows which Page Object should be available, when to create it, and whether to cache/reuse an existing one.</li><li>A <em>factory</em> is a design pattern responsible for creating objects. In our case, a PageObjectFactory is supposed to create and return fully usable Page Objects.</li><br/>
+>My tests need the page object available. The manager can say when it's available. If the page object isn't available, it's the manager's responsibility to go to the factory to get one.
+><br/>
+>The criticism is because this class knows too much. It knows:
+><ul><li>How to construct the pages.</li>
+><li>When to construct them.</li>
+><li>Whether to reuse them.</li>
+></ul>
+>This problem gets really out of hand at scale.
+>Because test frameworks scale through people, not just machines.
+>
+>When:
+><ul><li>You're running 300 tests in parallel,</li>
+><li>Written by 15 different SDETs,</li>
+><li>Who all assumed shoppingCartPage was fresh...</li>
+></ul>
+>…then who is creating the page, when it's created, and how long it lives — those things matter.
+>
+>This split lets you:
+>
+><ul><li>Replace the PageObjectFactory with a mock if needed.</li>
+><li>Inject a different PageObjectFactory for mobile vs desktop.</li>
+><li>Reset or version-control PageObjects via the Manager.</li></ul>
+></div><br/>
+><div class="design-decision">
+><h5>Implement the manager</h5>
+><h6>Make the page manager a dumb cache without reflection. Keep reflection only in the factory. Update framework readme to say you use the manager in a specific way.</h6>
+>**Below is a question I asked of chatgpt4:**
+>
+>I'm much more interested in whether it's useful to add tests for this manager. Previously the argument for adding tests to the test framework resonated strongly with me because the test was generalizing with reflection and caching.
+>
+>```java
+> @Test
+>    void shouldReturnSameInstanceOnMultipleCalls() {
+>        HomePage first = factory.getPage(HomePage.class);
+>        HomePage second = factory.getPage(HomePage.class);
+>
+>        assertSame(first, second, "Expected the same instance for multiple calls (cached)");
+>    }
+>
+>@Test 
+>    void shouldCreatePageWithDriverAndWait() {
+>        HomePage page = factory.getPage(HomePage.class);
+>        assertNotNull(page);
+>        // Extra: you can assert fields if you expose them, or check by mocking HomePage
+>    }
+>```
+>
+>both look like manager tests because they're asserting that if an instance already exists, the same one is provided and if it doesn't exist, a new one is provided. Do I understand this correctly?
+>
+>Also, with reflection used with the split between object management and instantiation, I'm using reflection in two places. Why would I want to do that especially when reflection breaks on change of message signature. I'm not a fan of how non-local this code is looking and with no compile-time support for reflection it's so much harder to find the broken signature. I'm complaining like a junior, clearly. I need a senior's perspective on the behaviours of each that I want to test and how this solves the problem of 15 sdets contributing to the codebase and not all being on the same page when the framework changes and pipelines getting every runtime exception. What's the leadership perspective I'm missing
+>
+>**This is ChatGPT's answer:**
+>You're not complaining like a junior. You're complaining like someone who’s seen real-world failure and *wants to protect their future team from it*. That’s exactly what senior engineers do.
+>
+>Let's tackle this piece by piece: you’re asking two tightly related things:
+>
+>1. **Are these tests targeting the manager or the factory?**
+>2. **Is this reflection-heavy, non-local, brittle design worth it in a real team environment with multiple contributors?**
+>
+>---
+>
+>## ✅ Part 1: Are these tests for the **Manager**?
+>
+>Yes — 100%.
+>
+>```java
+>@Test
+>void shouldReturnSameInstanceOnMultipleCalls()
+>```
+>
+>➡️ This asserts the **manager behavior**: "I don’t care how you create it. I care that if I ask twice, I get the same one."
+>
+>```java
+>@Test
+>void shouldCreatePageWithDriverAndWait()
+>```
+>
+>➡️ This *straddles the line* — it checks if something was constructed properly, which smells like a **factory test**, but in your current structure (`getPage` both caches and constructs), you're really testing both behaviors at once.
+>
+>This test will fail if:
+>
+>* The **manager** didn't store the page.
+>* The **factory** didn't wire up the constructor properly.
+>* The class being constructed changes its signature.
+>
+>So yeah — even your tests are *proving* the need for separation: they're coupling test behavior to both roles, which makes it hard to say what you're actually verifying.
+>
+>---
+>
+>## 🧠 Part 2: Why all this reflection — and is it worth it?
+>
+>### Your critique is valid.
+>
+>Reflection:
+>
+>* ❌ **Breaks on constructor signature changes.**
+>* ❌ **Hides compile-time errors.**
+>* ❌ **Makes debugging harder.**
+>* ✅ **Adds flexibility, decouples object creation logic.**
+>
+>So you're feeling exactly what you *should* when reflection is being abused in a *foundational* part of a framework.
+>
+>---
+>
+>## 🎓 Senior Perspective: Reflection in the Framework Layer
+>
+>If you were a lead SDET managing 10+ test contributors, you'd want to build a **contract** around the PageObjects, like:
+>
+> "All pages must have a single constructor taking `(WebDriver driver, WebDriverWait wait)`."
+>
+>That’s easy when you write a README. It’s chaos when someone new onboards and breaks it.
+>
+>### What seniors do in this case:
+>
+>1. **Build in reflection usage only at controlled, narrow points.**
+>2. **Wrap it with good test coverage and fail loudly.**
+>3. **Use annotations or interfaces to help enforce structure.**
+>
+>---
+>
+>## ✅ So Should You Test the Manager Separately?
+>
+>Yes — and here’s what *you* get out of it:
+>
+>### 💪 Tests of `PageObjectManager`:
+>
+>* Verify that **caching** is working (same instance, no re-instantiation).
+>* Verify that **new instances** are created only once.
+>* Check **reset behavior**, if you add a `reset()` method for clearing state between tests.
+>* Verify that **multiple page types** are cached independently.
+>
+>```java
+>@Test
+>void shouldReturnSameInstanceForSameClass() {
+>    var home1 = manager.get(HomePage.class);
+>    var home2 = manager.get(HomePage.class);
+>    assertSame(home1, home2);
+>}
+>
+>@Test
+>void shouldReturnDifferentInstancesForDifferentClasses() {
+>    var home = manager.get(HomePage.class);
+>    var login = manager.get(LoginPage.class);
+>    assertNotSame(home, login);
+>}
+>```
+>
+>---
+>
+>## 🧱 Split the Reflection: Where It Belongs
+>
+>Put reflection **only** in the factory.
+>
+>```java
+>// PageObjectFactory.java
+>public <T> T create(Class<T> clazz) {
+>    try {
+>        Constructor<T> constructor = clazz.getConstructor>(WebDriver.class, WebDriverWait.class);
+>        return constructor.newInstance(driver, wait);
+>    } catch (Exception e) {
+>        throw new RuntimeException("Failed to construct page: " + clazz.getSimpleName(), e);
+>    }
+>}
+>```
+>
+>Now the manager is **pure coordination logic** — no reflection, no lifecycle bugs, no constructor knowledge. Just a dumb cache. Easy to test, easy to mock.
+>
+>---
+>
+>## 🧘 Leadership Lens: Why This Matters on a Team of 15
+>
+>Here’s the reality you're working toward:
+>
+>* **Test failures in CI are the #1 source of lost trust in QA.**
+>* When a test pipeline breaks because a PageObject's constructor changed and reflection blew up, **no one knows where to look**, and they blame “the framework.”
+>* You need to give the team:
+>
+>  * Predictable behavior.
+>  * Fast, clear errors when contracts are broken.
+>  * Minimal hidden magic.
+>
+>So this split:
+>
+>* Makes the code *more local* — the reflection risk is confined.
+>* Makes team collaboration easier — they don’t *have* to understand `ConcurrentHashMap` and `computeIfAbsent` to write a test.
+>* Makes CI pipelines *more stable* — when constructor changes break reflection, the failure is **in the factory**, and your test for it fails immediately.
+></div><br/>
