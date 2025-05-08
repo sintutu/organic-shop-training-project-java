@@ -28,7 +28,7 @@ Add an end to end test performing the following:
 
 Clone the repo with 
 
-```pwsh
+```bash
 git clone https://github.com/sintutu/organic-shop-training-project-java.git
 ```
 

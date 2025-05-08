@@ -1,0 +1,45 @@
+
+/* Please visit the URL below for more information: */
+/*   https://shd101wyy.github.io/markdown-preview-enhanced/#/customize-css */
+
+.markdown-preview.markdown-preview {
+  // modify your style here
+  // eg: background-color: blue;
+  .recommendation-box {
+    background-color: #d4f7d4; // Light green background
+    border: 2px solid #228b22; // Dark green border
+    border-radius: 15px; // Rounded corners
+    padding: 10px; // Space inside the box
+    font-family: Arial, sans-serif; // Clean font
+    color: #006400; // Text color
+    position: relative; // Enables pseudo-element positioning
+  }
+
+  .recommendation-box:before {
+    content: "😊"; // Adds the smiley
+    position: absolute;
+    top: -10px;
+    left: -10px;
+    font-size: 20px;
+  }
+
+  .aside-box {
+    background-color: #e9bced; // Light green background
+    border: 2px solid #cf23b5; // Dark green border
+    border-radius: 15px; // Rounded corners
+    padding: 10px; // Space inside the box
+    font-family: Arial, sans-serif; // Clean font
+    color: #3c0064; // Text color
+    position: relative; // Enables pseudo-element positioning
+  }
+
+  .design-decision {
+    background-color: #b3b5e0; // Light green background
+    border: 2px solid #200765; // Dark green border
+    border-radius: 15px; // Rounded corners
+    padding: 10px; // Space inside the box
+    font-family: Arial, sans-serif; // Clean font
+    color: #1e1e72; // Text color
+    position: relative; // Enables pseudo-element positioning
+  }
+}
